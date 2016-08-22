@@ -35,7 +35,7 @@ public:
             break;
         }
 
-        header_["COnnection"] = "close";
+        header_["Connection"] = "close";
         auto it = header_.find("Content-Length");
         if(it != header_.end()) header_.erase(it);
         for(auto it = header_.begin(); it != header_.end(); ++it)
@@ -68,8 +68,8 @@ void HttpResponse::header(const std::string& key, const std::string& value)
 
 void HttpResponse::response(const std::string& resp, const std::string& ct)
 {
-    response_->header_["Content-Type"] = ct; 
-    response_->body_ = resp;   
+    response_->header_["Content-Type"] = ct;
+    response_->body_ = resp;
 }
 
 void HttpResponse::response(const std::map<std::string,std::string>& resp)
@@ -97,12 +97,14 @@ void HttpResponse::response(const std::map<std::string,std::string>& resp)
 void HttpResponse::response(int code)
 {
     response_->code_ = code;
+    response_->body_.clear();
 }
 
 void HttpResponse::redirect(const std::string& u)
 {
     response_->code_ = 302;
-    response_->header_["Location"] = u; 
+    response_->header_["Location"] = u;
+    response_->body_.clear();
 }
 
 std::string HttpResponse::str()
