@@ -11,7 +11,7 @@ endif()
 message("------------ Options -------------")
 message("  CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-aux_source_directory(libnatsu CO_SRC_LIST)
+aux_source_directory(libgo CO_SRC_LIST)
 
 
 set(USE_BOOST_COROUTINE 0)
@@ -52,6 +52,9 @@ message("-------------- Env ---------------")
 message("  CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 message("  CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
 message("----------------------------------")
+
+include_directories(${PROJECT_SOURCE_DIR}/inc)
+aux_source_directory(${PROJECT_SOURCE_DIR}/natsu CO_SRC_LIST)
 
 # 选项互斥检查
 if (UNIX)
@@ -103,8 +106,8 @@ message("------------------------------------")
 
 include_directories(libgo)
 
-set(TARGET "libnatsu")
-set(STATIC_T "libnatsu_static")
+set(TARGET "natsu")
+set(STATIC_T "natsu")
 
 add_library("${STATIC_T}" STATIC ${CO_SRC_LIST})
 set_target_properties("${STATIC_T}" PROPERTIES OUTPUT_NAME "${TARGET}")
@@ -140,5 +143,3 @@ else ()
     set_target_properties("${STATIC_T}" PROPERTIES COMPILE_FLAGS "/wd4819 /wd4267")
 endif()
 
-include_directories(inc)
-include_directories(natsu)

@@ -1,32 +1,47 @@
 #ifndef NATSU_APP_H_
 #define NATSU_APP_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifdef __linux__
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
+#include <memory>
+
+#include "http_request.h"
+#include "http_response.h"
+
 namespace natsu {
 
 class Inject
 {
 public:
-    void before(std::shared_ptr<HttpRequest>,std::shared_ptr<HttpResponse>) {}
-    void after(std::shared_ptr<HttpRequest>,std::shared_ptr<HttpResponse>) {}
-    void fail(std::shared_ptr<HttpRequest>,std::shared_ptr<HttpResponse>) {}
+    virtual void before(std::shared_ptr<natsu::http::HttpRequest>&,std::shared_ptr<natsu::http::HttpResponse>&) {}
+    virtual void after(std::shared_ptr<natsu::http::HttpRequest>&,std::shared_ptr<natsu::http::HttpResponse>&) {}
+    virtual void fail(std::shared_ptr<natsu::http::HttpRequest>&,std::shared_ptr<natsu::http::HttpResponse>&) {}
 };
 
-template<Inject* I = NULL>
 class NatsuApp
 {
 public:
-    NatsuApp();
+    NatsuApp(std::shared_ptr<natsu::Inject> I = std::make_shared<Inject>());
     virtual ~NatsuApp();
 
-    bool listen(unsigned short port);
-    void run();
+    void listen(unsigned short port);
 
 private:
     void handle(int sockfd);
-    void wait();
+    void wait(unsigned short port);
 
 private:
-    Inject* inject_ = I;
+    std::shared_ptr<natsu::Inject> inject_;
     int sock_;
 };
 

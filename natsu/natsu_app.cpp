@@ -1,22 +1,31 @@
 #include "natsu_app.h"
-
+#include "coroutine.h"
+#include "http_parser.h"
+#include "http_router.h"
 
 namespace natsu
 {
 
-NatsuApp::NatsuApp()
+NatsuApp::NatsuApp(std::shared_ptr<natsu::Inject> inject)
 {
-    sock_ = socket(AF_INET, SOCK_STREAM, 0);
+    inject_ = inject;
 }
 
 NatsuApp::~NatsuApp()
 {
-    close(sock_);
+    
 }
 
 
-bool NatsuApp::listen(unsigned short port)
+void NatsuApp::listen(unsigned short port)
 {
+    go std::bind(&natsu::NatsuApp::wait, this, port);
+    co_sched.RunUntilNoTask();
+}
+
+void NatsuApp::wait(unsigned short port)
+{
+    sock_ = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
@@ -24,28 +33,19 @@ bool NatsuApp::listen(unsigned short port)
     socklen_t len = sizeof(addr);
     if (-1 == bind(sock_, (sockaddr*)&addr, len))
     {
-        return false;
+        close(sock_);
+        return ;
     }
 
     if (-1 == ::listen(sock_, 5))
     {
-        return false;
+        close(sock_);
+        return ;
     }
 
     int rep = 1;
     setsockopt( sock_, SOL_SOCKET, SO_REUSEADDR, &rep, sizeof(rep) );
 
-    return true;
-}
-
-void NatsuApp::run()
-{
-    go std::bind(&natsu::NatsuApp::wait, this);
-    co_sched.RunUntilNoTask();
-}
-
-void NatsuApp::wait()
-{
     while(true)
     {
         sockaddr_in addr;
@@ -62,6 +62,8 @@ void NatsuApp::wait()
 
         go std::bind(&natsu::NatsuApp::handle, this, sockfd);
     }
+
+    close(sock_);
 }
 
 void NatsuApp::handle(int sockfd)
@@ -97,13 +99,12 @@ void NatsuApp::handle(int sockfd)
 
             case natsu::success:
             {
-                static natsu::http::HttpResponse kNullResponse;
                 std::shared_ptr<natsu::http::HttpResponse> resp(new natsu::http::HttpResponse());
                 try
                 {
-                    std::shared_ptr<natsu::http::HttpResponse> req = parser.request();
+                    std::shared_ptr<natsu::http::HttpRequest> req = parser.request();
                     if(inject_) inject_->before(req, resp);
-                    if(*resp == kNullResponse)
+                    if(resp->empty())
                     {
                         natsu::http::HttpRouter::instance().handle(req, resp);
                         if(inject_) inject_->after(req, resp);
@@ -112,14 +113,15 @@ void NatsuApp::handle(int sockfd)
                 catch(...)
                 {
                     if(inject_)
-                        inject_->fail(req, resp);
+                        inject_->fail(parser.request(), resp);
                     else
                         resp->response(500);
                 }
 
                 std::string buf = resp->str();
                 puts(buf.c_str());
-                write(sockfd, buf.c_str(), buf.size());
+                size_t n = write(sockfd, buf.c_str(), buf.size());
+                if(n != buf.size()) {}
                 close(sockfd);
             }
             break;

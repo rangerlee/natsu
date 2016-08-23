@@ -112,5 +112,11 @@ std::string HttpResponse::str()
     return response_->make();
 }
 
+bool HttpResponse::empty()
+{
+    return response_->code_ == 200 &&
+         response_->header_.size() == 0 &&
+         response_->body_.size() == 0 ;
+}
 
 }}

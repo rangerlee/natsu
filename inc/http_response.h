@@ -22,6 +22,7 @@ public:
 
 public:
     std::string str(); 
+    bool empty();
 
 private:
     class HttpResponseImpl;

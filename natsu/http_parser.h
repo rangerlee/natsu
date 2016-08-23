@@ -56,7 +56,7 @@ public:
         return failure;
     }
 
-    std::shared_ptr<HttpRequest> request()
+    std::shared_ptr<HttpRequest>& request()
     {
         return req_;
     }
