@@ -28,6 +28,7 @@ public:
     virtual void fail(std::shared_ptr<natsu::http::HttpRequest>&,std::shared_ptr<natsu::http::HttpResponse>&) {}
 };
 
+
 class NatsuApp
 {
 public:
@@ -35,6 +36,8 @@ public:
     virtual ~NatsuApp();
 
     void listen(unsigned short port);
+	void register_handler(const std::string& pattern, 
+		std::function<void(std::shared_ptr<natsu::http::HttpRequest>,std::shared_ptr<natsu::http::HttpResponse>)> h, natsu::http::Method m = natsu::http::GET);
 
 private:
     void handle(int sockfd);

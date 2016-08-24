@@ -9,11 +9,11 @@
 
 namespace natsu {
 namespace http {
-    
+ 
+typedef	std::function<void(std::shared_ptr<HttpRequest>,std::shared_ptr<HttpResponse>)> Handler; 
 
 class HttpRouter
 {
-    typedef	std::function<void(std::shared_ptr<HttpRequest>,std::shared_ptr<HttpResponse>)> Handler;
 public:
     HttpRouter();
     static HttpRouter& instance();
@@ -21,8 +21,12 @@ public:
     void handle(std::shared_ptr<HttpRequest>,std::shared_ptr<HttpResponse>);
 
 private:
-    class HttpRouterImpl;
-    std::shared_ptr<HttpRouterImpl> router_;
+	void handle(std::map<std::string, Handler>&,
+                std::shared_ptr<HttpRequest>,std::shared_ptr<HttpResponse>);
+
+private:
+    std::map<std::string, Handler> handle_get_;
+    std::map<std::string, Handler> handle_post_;
 };
 
 }}

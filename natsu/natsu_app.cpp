@@ -2,6 +2,7 @@
 #include "coroutine.h"
 #include "http_parser.h"
 #include "http_router.h"
+#include "http_router.h"
 
 namespace natsu
 {
@@ -132,6 +133,12 @@ void NatsuApp::handle(int sockfd)
             }
         }
     }
+}
+
+void NatsuApp::register_handler(const std::string& pattern, 
+		std::function<void(std::shared_ptr<natsu::http::HttpRequest>,std::shared_ptr<natsu::http::HttpResponse>)> h, natsu::http::Method m)
+{
+	natsu::http::HttpRouter::instance().register_handler(pattern, h, m);
 }
 
 
