@@ -5,6 +5,8 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <set>
+#include <list>
 
 #include "natsu_error.h"
  
@@ -35,6 +37,15 @@ struct RedisClient
     */
      virtual int hset(const std::string& key, const std::string& filed, const std::string& value, RedisError& err) = 0;
      virtual std::string hget(const std::string& key, const std::string& filed, RedisError& err) = 0;
+     virtual int hdel(const std::string& key, const std::string& filed, RedisError& err) = 0;
+     virtual int hdel(const std::string& key, const std::vector<std::string>& filed, RedisError& err) = 0;
+
+    /* *
+    * set
+    */
+    virtual int sadd(const std::string& key, const std::string& value, RedisError& err) = 0;
+    virtual int sadd(const std::string& key, const std::vector<std::string>& value, RedisError& err) = 0;
+    virtual std::set<std::string>  smembers(const std::string& key, RedisError& err) = 0;
 };
 
 

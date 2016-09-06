@@ -203,6 +203,106 @@ public:
 		return "";
      }
 
+     virtual int hdel(const std::string& key, const std::string& filed, RedisError& err)
+     {
+     	if(do_redis_command_args("hdel %b %b", key.c_str(), key.size(), filed.c_str(), filed.size()))
+     	{
+     		if(REDIS_REPLY_INTEGER != redis_reply_->type)
+			{
+				err.code() = -1;
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				return 0;
+			}
+
+			return static_cast<int>(redis_reply_->integer);
+     	}
+
+     	err = redis_error_;
+		return 0;
+     }
+
+     virtual int hdel(const std::string& key, const std::vector<std::string>& filed, RedisError& err)
+     {
+     	std::vector<std::string> fileds = filed;
+     	fileds.insert(fileds.begin(), key);
+     	if(do_redis_command_format("hdel", fileds))
+     	{
+     		if(REDIS_REPLY_INTEGER != redis_reply_->type)
+			{
+				err.code() = -1;
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				return 0;
+			}
+
+			return static_cast<int>(redis_reply_->integer);
+     	}
+
+     	err = redis_error_;
+		return 0;
+     }
+
+    //set
+    virtual int sadd(const std::string& key, const std::string& value, RedisError& err)
+    {
+    	if(do_redis_command_args("sadd %b %b %b", key.c_str(), key.size(), value.c_str(), value.size()))
+     	{
+     		if(REDIS_REPLY_INTEGER != redis_reply_->type)
+			{
+				err.code() = -1;
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				return 0;
+			}
+
+			return static_cast<int>(redis_reply_->integer);
+     	}
+
+     	err = redis_error_;
+		return 0;
+    }
+
+    virtual int sadd(const std::string& key, const std::vector<std::string>& value, RedisError& err)
+    {
+		if(do_redis_command_format("sadd", value))
+     	{
+     		if(REDIS_REPLY_INTEGER != redis_reply_->type)
+			{
+				err.code() = -1;
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				return 0;
+			}
+
+			return static_cast<int>(redis_reply_->integer);
+     	}
+
+     	err = redis_error_;
+		return 0;
+    }
+
+    virtual std::set<std::string> smembers(const std::string& key, RedisError& err)
+    {
+    	std::set<std::string> result;
+    	if(do_redis_command_args("smembers %b", key.c_str(), key.size()))
+     	{
+     		if(REDIS_REPLY_ARRAY != redis_reply_->type)
+			{
+				err.code() = -1;
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				return result;
+			}
+
+			for (size_t i = 0; i < redis_reply_->elements; i += 2)
+	        {
+	            redisReply* member_reply = redis_reply_->element[i];
+	            result.insert(std::string(member_reply->str, member_reply->len));
+	        }
+
+	        return result;
+     	}
+
+     	err = redis_error_;
+		return result;
+    }
+
 private:
 	void *redis_block_for_reply() {
 	    void *reply;
