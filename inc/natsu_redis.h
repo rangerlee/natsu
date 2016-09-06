@@ -4,14 +4,37 @@
 #include <string>
 #include <map>
 #include <memory>
-#include "hiredis.h"
+#include <vector>
+
+#include "natsu_error.h"
+ 
 
 namespace natsu{
 
+typedef NatsuError RedisError;
 
 struct RedisClient
 {
-    virtual std::shared_ptr<redisReply> redisCommand(const std::string& command) = 0;
+    /* *
+     * key
+    */
+    virtual int del(const std::string& key, RedisError& err) = 0;
+    virtual int del(const std::vector<std::string> keys, RedisError& err) = 0;
+    virtual bool exists(const std::string& key, RedisError& err) = 0;
+
+    /* *
+     * string
+    */
+     virtual std::string get(const std::string& key, RedisError& err) = 0;
+     virtual bool set(const std::string& key, const std::string& value, RedisError& err) = 0;
+     virtual bool set(const std::string& key, const std::string& value, bool set_when_exist, RedisError& err) = 0;
+     virtual bool set(const std::string& key, const std::string& value, int millisecond, bool set_when_exist, RedisError& err) = 0;
+
+     /* *
+     * hashmap
+    */
+     virtual int hset(const std::string& key, const std::string& filed, const std::string& value, RedisError& err) = 0;
+     virtual std::string hget(const std::string& key, const std::string& filed, RedisError& err) = 0;
 };
 
 
@@ -19,20 +42,22 @@ struct RedisClient
 /* *
  * redisInit 
  * @param redisname : redis name, must unique
- * @param ip : redis address 
- * @param port : redis listen port 6379
+ * @param config : redis config, like
+ *                { 
+ *                  "server_addr" : "127.0.0.1", //redis server ip
+ *                  "server_port" : 6379         //redis server port
+ *                }
  * @param link : connection count
- * @param timeout : connect timeout
 */
-void redisInit(const std::string& redisname, const std::string& ip, unsigned short port, size_t link, size_t timeout);
+void redisInit(const std::string& redisname, const std::string& config, size_t link);
 
 
 /* *
  * redisCommand
- * @param redisname : redis name 
+ * @param redisname : redis name        
  * @return std::shared_ptr<RedisClient> : hiredis client
 */
-std::shared_ptr<RedisClient> redisInstance(const std::string& redisname);
+std::shared_ptr<RedisClient> newRedisInstance(const std::string& redisname);
 
 
 
