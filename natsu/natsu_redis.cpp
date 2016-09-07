@@ -244,7 +244,7 @@ public:
     //set
     virtual int sadd(const std::string& key, const std::string& value, RedisError& err)
     {
-    	if(do_redis_command_args("sadd %b %b %b", key.c_str(), key.size(), value.c_str(), value.size()))
+    	if(do_redis_command_args("sadd %b %b", key.c_str(), key.size(), value.c_str(), value.size()))
      	{
      		if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
@@ -290,7 +290,7 @@ public:
 				return result;
 			}
 
-			for (size_t i = 0; i < redis_reply_->elements; i += 2)
+			for (size_t i = 0; i < redis_reply_->elements; i ++)
 	        {
 	            redisReply* member_reply = redis_reply_->element[i];
 	            result.insert(std::string(member_reply->str, member_reply->len));
