@@ -19,10 +19,10 @@ int main()
 {
 	std::string config = "{\"server_addr\": \"192.168.85.217\", \"server_port\":6379}";
 	std::cout << "test program" << std::endl;
-    natsu::redisInit("im",config,5);
+	natsu::redisInit("im",config,5);
   	std::cout << "init redis poll" << std::endl;
 	natsu::NatsuApp app;
 	app.register_handler("/", read_from_redis);
 	app.listen(9000);
-    return 0;
+    	return 0;
 }

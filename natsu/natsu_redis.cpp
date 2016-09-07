@@ -11,6 +11,10 @@
 
 namespace natsu {
 
+static const char* _NATSU_REDIS_SERVER_ADDR_ = "server_addr";
+static const char* _NATSU_REDIS_SERVER_PORT_ = "server_port";
+static const char* _NATSU_REDIS_ERROR_MISMATCH_ = "unexcepted reply";
+
 class RedisManager;
 /* *
  * RedisClientImpl
@@ -42,7 +46,7 @@ public:
 			if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return 0;
 			}
 
@@ -62,7 +66,7 @@ public:
 			if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return 0;
 			}
 
@@ -88,7 +92,7 @@ public:
 			if(REDIS_REPLY_STRING != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return 0;
 			}
 
@@ -109,7 +113,7 @@ public:
     		if(REDIS_REPLY_STATUS != redis_reply_->type && REDIS_REPLY_ERROR != redis_reply_->type)
     		{
     			err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return false;
     		}
 
@@ -120,8 +124,8 @@ public:
 		return "";
     }
 
-     virtual bool set(const std::string& key, const std::string& value, bool set_when_exist, RedisError& err)
-     {
+    virtual bool set(const std::string& key, const std::string& value, bool set_when_exist, RedisError& err)
+    {
      	std::vector<std::string> v;
     	v.push_back(key);
     	v.push_back(value);
@@ -131,7 +135,7 @@ public:
     		if(REDIS_REPLY_STATUS != redis_reply_->type && REDIS_REPLY_ERROR != redis_reply_->type)
     		{
     			err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return false;
     		}
 
@@ -140,10 +144,10 @@ public:
 
     	err = redis_error_;
 		return "";
-     }
+    }
 
-     virtual bool set(const std::string& key, const std::string& value, int millisecond, bool set_when_exist, RedisError& err)
-     {
+    virtual bool set(const std::string& key, const std::string& value, int millisecond, bool set_when_exist, RedisError& err)
+    {
      	std::vector<std::string> v;
     	v.push_back(key);
     	v.push_back(value);
@@ -155,7 +159,7 @@ public:
     		if(REDIS_REPLY_STATUS != redis_reply_->type && REDIS_REPLY_ERROR != redis_reply_->type)
     		{
     			err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return false;
     		}
 
@@ -164,17 +168,17 @@ public:
 
     	err = redis_error_;
 		return "";
-     }
+    }
 
-     //hashmap
-     virtual int hset(const std::string& key, const std::string& filed, const std::string& value, RedisError& err)
-     {
+    //hashmap
+    virtual int hset(const std::string& key, const std::string& filed, const std::string& value, RedisError& err)
+    {
      	if(do_redis_command_args("hset %b %b %b", key.c_str(), key.size(), filed.c_str(), filed.size(), value.c_str(), value.size()))
      	{
      		if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return 0;
 			}
 
@@ -183,16 +187,16 @@ public:
 
      	err = redis_error_;
 		return 0;
-     }
+    }
 
-     virtual std::string hget(const std::string& key, const std::string& filed, RedisError& err)
-     {
+    virtual std::string hget(const std::string& key, const std::string& filed, RedisError& err)
+    {
      	if(do_redis_command_args("hget %b %b", key.c_str(), key.size(), filed.c_str(), filed.size()))
      	{
      		if(REDIS_REPLY_STRING != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return 0;
 			}
 
@@ -201,16 +205,16 @@ public:
 
      	err = redis_error_;
 		return "";
-     }
+    }
 
-     virtual int hdel(const std::string& key, const std::string& filed, RedisError& err)
-     {
+    virtual int hdel(const std::string& key, const std::string& filed, RedisError& err)
+    {
      	if(do_redis_command_args("hdel %b %b", key.c_str(), key.size(), filed.c_str(), filed.size()))
      	{
      		if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return 0;
 			}
 
@@ -219,10 +223,10 @@ public:
 
      	err = redis_error_;
 		return 0;
-     }
+    }
 
-     virtual int hdel(const std::string& key, const std::vector<std::string>& filed, RedisError& err)
-     {
+    virtual int hdel(const std::string& key, const std::vector<std::string>& filed, RedisError& err)
+    {
      	std::vector<std::string> fileds = filed;
      	fileds.insert(fileds.begin(), key);
      	if(do_redis_command_format("hdel", fileds))
@@ -230,7 +234,7 @@ public:
      		if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return 0;
 			}
 
@@ -239,7 +243,7 @@ public:
 
      	err = redis_error_;
 		return 0;
-     }
+    }
 
     //set
     virtual int sadd(const std::string& key, const std::string& value, RedisError& err)
@@ -249,7 +253,7 @@ public:
      		if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return 0;
 			}
 
@@ -267,7 +271,7 @@ public:
      		if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return 0;
 			}
 
@@ -286,7 +290,7 @@ public:
      		if(REDIS_REPLY_ARRAY != redis_reply_->type)
 			{
 				err.code() = -1;
-				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : "type dismatch";
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
 				return result;
 			}
 
@@ -330,7 +334,7 @@ private:
 		redis_error_.clear();
 		if(NULL == redis_context_.get())
 		{
-			redis_context_.reset(redisConnect(json_object_["server_addr"].AsString().c_str(), json_object_["server_port"].AsInt()), redisFree);
+			redis_context_.reset(redisConnect(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt()), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
@@ -341,22 +345,13 @@ private:
 
 		if(redis_context_ && redis_context_->err)
 		{
-			#if NATSU_HIREDIS_SUPPORT_RECONNECT
-			if(REDIS_OK != redisReconnect(redis_context_.get()))
-			{
-				redis_error_.code() = redis_context_->err ? redis_context_->err : -1;
-				redis_error_.reason() = redis_context_->err ? redis_context_->errstr : "";
-				return false;
-			}
-			#else
-			redis_context_.reset(redisConnect(json_object_["server_addr"].AsString().c_str(), json_object_["server_port"].AsInt()), redisFree);
+			redis_context_.reset(redisConnect(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt()), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
 				redis_error_.reason() = redis_context_.get() ? redis_context_->errstr : "";
 				return false;
 			}
-			#endif
 		}
 		
 		if(REDIS_OK == redisAppendFormattedCommand(redis_context_.get(), cmd.c_str(), cmd.size()))
@@ -369,22 +364,13 @@ private:
 		redisReply* reply = (redisReply*)redis_block_for_reply();
 		if(NULL == reply)
 		{
-			#if NATSU_HIREDIS_SUPPORT_RECONNECT
-			if(REDIS_OK != redisReconnect(redis_context_.get()))
-			{
-				redis_error_.code() = redis_context_->err ? redis_context_->err : -1;
-				redis_error_.reason() = redis_context_->err ? redis_context_->errstr : "";
-				return false;
-			}
-			#else
-			redis_context_.reset(redisConnect(json_object_["server_addr"].AsString().c_str(), json_object_["server_port"].AsInt()), redisFree);
+			redis_context_.reset(redisConnect(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt()), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
 				redis_error_.reason() = redis_context_.get() ? redis_context_->errstr : "";
 				return false;
 			}
-			#endif
 
 			if(REDIS_OK == redisAppendFormattedCommand(redis_context_.get(), cmd.c_str(), cmd.size()))
 			{
@@ -425,7 +411,7 @@ private:
 		redis_error_.clear();
 		if(NULL == redis_context_.get())
 		{
-			redis_context_.reset(redisConnect(json_object_["server_addr"].AsString().c_str(), json_object_["server_port"].AsInt()), redisFree);
+			redis_context_.reset(redisConnect(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt()), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
@@ -436,43 +422,25 @@ private:
 
 		if(redis_context_ && redis_context_->err)
 		{
-			#if NATSU_HIREDIS_SUPPORT_RECONNECT
-			if(REDIS_OK != redisReconnect(redis_context_.get()))
-			{
-				redis_error_.code() = redis_context_->err ? redis_context_->err : -1;
-				redis_error_.reason() = redis_context_->err ? redis_context_->errstr : "";
-				return false;
-			}
-			#else
-			redis_context_.reset(redisConnect(json_object_["server_addr"].AsString().c_str(), json_object_["server_port"].AsInt()), redisFree);
+			redis_context_.reset(redisConnect(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt()), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
 				redis_error_.reason() = redis_context_.get() ? redis_context_->errstr : "";
 				return false;
 			}
-			#endif
 		}
 		
 		redisReply* reply = (redisReply*)redisvCommand(redis_context_.get(), fmt, va);
 		if(NULL == reply)
 		{
-			#if NATSU_HIREDIS_SUPPORT_RECONNECT
-			if(REDIS_OK != redisReconnect(redis_context_.get()))
-			{
-				redis_error_.code() = redis_context_->err ? redis_context_->err : -1;
-				redis_error_.reason() = redis_context_->err ? redis_context_->errstr : "";
-				return false;
-			}
-			#else
-			redis_context_.reset(redisConnect(json_object_["server_addr"].AsString().c_str(), json_object_["server_port"].AsInt()), redisFree);
+			redis_context_.reset(redisConnect(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt()), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
 				redis_error_.reason() = redis_context_.get() ? redis_context_->errstr : "";
 				return false;
 			}
-			#endif
 
 			reply = (redisReply*)redisvCommand(redis_context_.get(), fmt, va);
 		}
