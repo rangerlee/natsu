@@ -56,7 +56,8 @@ struct RedisClient
  * @param config : redis config, like
  *                { 
  *                  "server_addr" : "127.0.0.1", //redis server ip
- *                  "server_port" : 6379         //redis server port
+ *                  "server_port" : 6379,        //redis server port
+ *                  "connect_timeout" : 5000     //connect redis timeout
  *                }
  * @param link : connection count
 */
