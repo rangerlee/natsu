@@ -45,7 +45,6 @@ public:
 	{
 		if(do_redis_command_args("del %s", key.c_str()))
 		{
-			//parse redisReply
 			if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
 				err.code() = -1;
@@ -65,7 +64,6 @@ public:
     	//cant't construct va_list on GCC, so we format redis command
     	if(do_redis_command_format("del", keys))
 		{
-			//parse redisReply
 			if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
 				err.code() = -1;
@@ -82,8 +80,20 @@ public:
 
     virtual bool exists(const std::string& key, RedisError& err)
     {
-    	//todo
-    	return true;
+    	if(do_redis_command_format("exists %b", key.c_str(), key.size()))
+		{
+			if(REDIS_REPLY_INTEGER != redis_reply_->type)
+			{
+				err.code() = -1;
+				err.reason() = REDIS_REPLY_ERROR == redis_reply_->type ? redis_reply_->str : _NATSU_REDIS_ERROR_MISMATCH_;
+				return false;
+			}
+
+			return static_cast<int>(redis_reply_->integer) == 1;
+		}
+
+		err = redis_error_;
+		return false;
     }
 
     //string
@@ -91,7 +101,6 @@ public:
     {
     	if(do_redis_command_args("get %s", key.c_str()))
 		{
-			//parse redisReply
 			if(REDIS_REPLY_STRING != redis_reply_->type)
 			{
 				err.code() = -1;
