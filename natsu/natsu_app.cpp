@@ -2,7 +2,6 @@
 #include "coroutine.h"
 #include "http_parser.h"
 #include "http_router.h"
-#include "http_router.h"
 
 namespace natsu
 {
@@ -16,7 +15,6 @@ NatsuApp::~NatsuApp()
 {
     
 }
-
 
 void NatsuApp::listen(unsigned short port)
 {
@@ -34,12 +32,14 @@ void NatsuApp::wait(unsigned short port)
     socklen_t len = sizeof(addr);
     if (-1 == bind(sock_, (sockaddr*)&addr, len))
     {
+        fprintf(stderr, "bind error: %s\n", strerror(errno));
         close(sock_);
         return ;
     }
 
     if (-1 == ::listen(sock_, 5))
     {
+        fprintf(stderr, "listen error: %s\n", strerror(errno));
         close(sock_);
         return ;
     }
@@ -57,7 +57,7 @@ void NatsuApp::wait(unsigned short port)
             if (EAGAIN == errno || EINTR == errno)
                 continue;
 
-            fprintf(stderr, "accept error:%s\n", strerror(errno));
+            fprintf(stderr, "accept error: %s\n", strerror(errno));
             break ;
         }
 
