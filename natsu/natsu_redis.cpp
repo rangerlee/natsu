@@ -14,6 +14,7 @@ static const char* _NATSU_REDIS_SERVER_ADDR_ = "server_addr";
 static const char* _NATSU_REDIS_SERVER_PORT_ = "server_port";
 static const char* _NATSU_REDIS_CONNECT_TIMEOUT_ = "connect_timeout";
 static const char* _NATSU_REDIS_ERROR_MISMATCH_ = "unexcepted reply";
+static const int   _NATSU_REDIS_CONNECT_TIMEOUT_DEFAULT_ = 5;
 
 class RedisManager;
 /* *
@@ -24,14 +25,38 @@ class RedisClientImpl : public RedisClient
 public:
 	friend class RedisManager;
 
+	struct RedisConfig
+	{
+		std::string addr;
+		unsigned short port;
+		unsigned int conntimeout;
+	};
+
 	RedisClientImpl(const std::string& name, const std::string& config)
 	: redis_name_(name)
 	{
-		json_object_ = ggicci::Json::Parse(config.c_str());
-		if(json_object_.IsNull())
+		redis_config_.reset(new RedisConfig);
+		ggicci::Json object = ggicci::Json::Parse(config.c_str());
+		if(object.IsNull())
+		{
 			throw std::logic_error("json parse failed");
-		connect_timeout_.tv_sec = json_object_[_NATSU_REDIS_CONNECT_TIMEOUT_].AsInt();
-		if(connect_timeout_.tv_sec < 1) connect_timeout_.tv_sec = 5;
+		}
+
+		redis_config_->addr = object[_NATSU_REDIS_SERVER_ADDR_].AsString();
+		redis_config_->port = object[_NATSU_REDIS_SERVER_PORT_].AsInt();
+
+		try
+		{
+			redis_config_->conntimeout = object[_NATSU_REDIS_CONNECT_TIMEOUT_].AsInt();
+			if(redis_config_->conntimeout < 1)
+				redis_config_->conntimeout = _NATSU_REDIS_CONNECT_TIMEOUT_DEFAULT_;
+		}
+		catch(...)
+		{
+			redis_config_->conntimeout = _NATSU_REDIS_CONNECT_TIMEOUT_DEFAULT_;
+		}
+
+		connect_timeout_.tv_sec = redis_config_->conntimeout;
 		connect_timeout_.tv_usec = 0;
 	}
 
@@ -80,7 +105,7 @@ public:
 
     virtual bool exists(const std::string& key, RedisError& err)
     {
-    	if(do_redis_command_format("exists %b", key.c_str(), key.size()))
+    	if(do_redis_command_args("exists %b", key.c_str(), key.size()))
 		{
 			if(REDIS_REPLY_INTEGER != redis_reply_->type)
 			{
@@ -475,7 +500,7 @@ private:
 	std::shared_ptr<redisReply> redis_reply_;
 	RedisError redis_error_;
 	std::string redis_name_;
-	ggicci::Json json_object_;
+	std::shared_ptr<RedisConfig> redis_config_;
 	std::string cmd_cache_;
 	struct timeval connect_timeout_;
 };

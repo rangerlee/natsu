@@ -120,9 +120,19 @@ void NatsuApp::handle(int sockfd)
                 }
 
                 std::string buf = resp->str();
-                puts(buf.c_str());
-                size_t n = write(sockfd, buf.c_str(), buf.size());
-                if(n != buf.size()) {}
+                size_t pos = 0;
+                size_t len = buf.size();
+                while(pos < len)
+                {
+                    ssize_t n = write(sockfd, buf.c_str() + pos, buf.size() - pos);
+                    if(n == -1) 
+                    {
+                        break;
+                    }
+
+                    pos += n;
+                }
+                
                 close(sockfd);
             }
             break;
