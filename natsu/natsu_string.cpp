@@ -14,5 +14,26 @@ void tokenize(const std::string& str, std::vector<std::string>& tokens, const st
     }  
 }
 
+std::string replace_all(const std::string &src, std::string org_str, std::string rep_str)  
+{  
+    std::string result;
+    std::string::size_type lastpos = 0;
+    while(true)
+    {
+        std::string::size_type pos = src.find_first_of(org_str, lastpos);
+        if(pos == std::string::npos)
+        {
+            result.append(src.substr(lastpos));
+            break;
+        }
+
+        result.append(src.substr(lastpos, pos - lastpos));
+        result.append(rep_str);
+        lastpos = pos + 1;
+    }
+
+    return result;
+} 
+
 
 }

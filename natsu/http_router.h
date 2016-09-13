@@ -6,6 +6,7 @@
 #include <functional>
 #include "http_request.h"
 #include "http_response.h"
+#include "natsu_regex.h"
 
 namespace natsu {
 namespace http {
@@ -21,12 +22,14 @@ public:
     void handle(std::shared_ptr<HttpRequest>,std::shared_ptr<HttpResponse>);
 
 private:
-	void handle(std::map<std::string, Handler>&,
+	void handle(std::map<std::string, Handler>&, PcreRegex& regex,
                 std::shared_ptr<HttpRequest>,std::shared_ptr<HttpResponse>);
 
 private:
     std::map<std::string, Handler> handle_get_;
     std::map<std::string, Handler> handle_post_;
+    natsu::PcreRegex regex_get_;
+    natsu::PcreRegex regex_post_;
 };
 
 }}

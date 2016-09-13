@@ -1,4 +1,5 @@
 #include "http_router.h"
+#include "natsu_string.h"
 
 namespace natsu {
 namespace http {
@@ -18,11 +19,25 @@ void HttpRouter::register_handler(const std::string& pattern, Handler h, Method 
     switch (method)
     {
         case GET:
-            handle_get_[pattern] = h;
+            {
+                handle_get_[pattern] = h;
+                std::string regex_str = "^" + pattern;
+                std::string r = natsu::replace_all(regex_str, "*", "\\w*");
+                r = natsu::replace_all(r, "+", "\\w+");
+                r = natsu::replace_all(r, "{", "\\w{");
+                regex_get_.add_rule(pattern, r);
+            }
             break;
 
         case POST:
-            handle_post_[pattern] = h;
+            {
+                handle_post_[pattern] = h;
+                std::string regex_str = "^" + pattern;
+                std::string r = natsu::replace_all(regex_str, "*", "\\w*");
+                r = natsu::replace_all(r, "+", "\\w+");
+                r = natsu::replace_all(r, "{", "\\w{");
+                regex_post_.add_rule(pattern, r);
+            }
             break;
 
         default:
@@ -32,15 +47,14 @@ void HttpRouter::register_handler(const std::string& pattern, Handler h, Method 
 
 void HttpRouter::handle(std::shared_ptr<HttpRequest> req,std::shared_ptr<HttpResponse> resp)
 {
-    //@todo regex
     switch(req->method())
     {
         case GET:
-            handle(handle_get_, req, resp);
+            handle(handle_get_, regex_get_, req, resp);
             break;
 
         case POST:
-            handle(handle_post_, req, resp);
+            handle(handle_post_, regex_post_, req, resp);
             break;
 
         default:
@@ -48,12 +62,13 @@ void HttpRouter::handle(std::shared_ptr<HttpRequest> req,std::shared_ptr<HttpRes
     }
 }
 
-void HttpRouter::handle(std::map<std::string, Handler>& h,
+void HttpRouter::handle(std::map<std::string, Handler>& h, PcreRegex& regex,
                 std::shared_ptr<HttpRequest> req,std::shared_ptr<HttpResponse> resp)
 {
-    if(h.find(req->document()) != h.end())
+    std::vector<natsu::PcreRegex::MatchResult> result = regex.match(req->document().c_str());
+    if(result.size() && result[0].name.size())
     {
-        (h[req->document()])(req, resp);
+        (h[result[0].name])(req, resp);
     }
     else
     {
