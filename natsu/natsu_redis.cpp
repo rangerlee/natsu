@@ -371,7 +371,7 @@ private:
 		redis_error_.clear();
 		if(NULL == redis_context_.get())
 		{
-			redis_context_.reset(redisConnectWithTimeout(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt(), connect_timeout_), redisFree);
+			redis_context_.reset(redisConnectWithTimeout(redis_config_->addr.c_str(), redis_config_->port, connect_timeout_), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
@@ -382,7 +382,7 @@ private:
 
 		if(redis_context_ && redis_context_->err)
 		{
-			redis_context_.reset(redisConnectWithTimeout(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt(), connect_timeout_), redisFree);
+			redis_context_.reset(redisConnectWithTimeout(redis_config_->addr.c_str(), redis_config_->port, connect_timeout_), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
@@ -401,7 +401,7 @@ private:
 		redisReply* reply = (redisReply*)redis_block_for_reply();
 		if(NULL == reply)
 		{
-			redis_context_.reset(redisConnectWithTimeout(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt(), connect_timeout_), redisFree);
+			redis_context_.reset(redisConnectWithTimeout(redis_config_->addr.c_str(), redis_config_->port, connect_timeout_), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
@@ -448,7 +448,7 @@ private:
 		redis_error_.clear();
 		if(NULL == redis_context_.get())
 		{
-			redis_context_.reset(redisConnectWithTimeout(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt(), connect_timeout_), redisFree);
+			redis_context_.reset(redisConnectWithTimeout(redis_config_->addr.c_str(), redis_config_->port, connect_timeout_), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
@@ -459,7 +459,7 @@ private:
 
 		if(redis_context_ && redis_context_->err)
 		{
-			redis_context_.reset(redisConnectWithTimeout(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt(), connect_timeout_), redisFree);
+			redis_context_.reset(redisConnectWithTimeout(redis_config_->addr.c_str(), redis_config_->port, connect_timeout_), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
@@ -471,7 +471,7 @@ private:
 		redisReply* reply = (redisReply*)redisvCommand(redis_context_.get(), fmt, va);
 		if(NULL == reply)
 		{
-			redis_context_.reset(redisConnectWithTimeout(json_object_[_NATSU_REDIS_SERVER_ADDR_].AsString().c_str(), json_object_[_NATSU_REDIS_SERVER_PORT_].AsInt(), connect_timeout_), redisFree);
+			redis_context_.reset(redisConnectWithTimeout(redis_config_->addr.c_str(), redis_config_->port, connect_timeout_), redisFree);
 			if(NULL == redis_context_.get() || redis_context_->err)
 			{
 				redis_error_.code() = redis_context_.get() ? redis_context_->err : -1;
