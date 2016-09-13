@@ -17,14 +17,22 @@ enum Method
 class HttpRequest
 {
 public:
-    //std::string header(const std::string& k);
-    //std::map<std::string,std::string> query();
+	HttpRequest(const std::string& doc);
+    std::string header(const std::string& k);
+    void header(const std::string& k, const std::string& v);
+    std::string query();
+    std::string query(const std::string& k);
+    std::string parameters();
+    std::string fragment();
+    std::string document();
+    Method& method() { return method_; }
+    std::string& body() { return body_; }
 
-public:
-    Method method;
-    std::string path;
-    std::map<std::string,std::string> header;
-    std::string body;
+private:
+    Method method_;
+    std::string path_;
+    std::map<std::string,std::string> header_;
+    std::string body_;
 };
 
 

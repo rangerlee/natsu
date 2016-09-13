@@ -67,8 +67,8 @@ private:
     {
         if(cache_.size() >= content_length_)
         {
-            req_->body.clear();
-            req_->body = cache_.substr(0,content_length_);
+            req_->body().clear();
+            req_->body() = cache_.substr(0,content_length_);
             cache_.erase(0,content_length_);
 
             return success;
@@ -108,7 +108,7 @@ private:
             else
             {
                 cache_.erase(0, pos + 2);
-                req_->body.append(cache_.c_str(), len);
+                req_->body().append(cache_.c_str(), len);
                 cache_.erase(0, len + 2);
             }
         }
@@ -130,17 +130,17 @@ private:
                 parse_func_ = &HttpParser::parse_body_with_length;
 
                 ///Transfer-Encoding
-                if(req_->header.find("transfer-encoding") != req_->header.end())
+                if(req_->header("transfer-encoding").size())
                 {
-                    std::string encode = req_->header["transfer-encoding"];
+                    std::string encode = req_->header("transfer-encoding");
                     if(strcasecmp("CHUNKED",encode.c_str()) == 0)
                         parse_func_ = &HttpParser::parse_body_with_chunk;
                 }
                 else
                 {
-                    if(req_->header.find("content-length") != req_->header.end())
+                    if(req_->header("content-length").size())
                     {
-                        std::string len = req_->header["content-length"];
+                        std::string len = req_->header("content-length");
                         content_length_ = atoi(len.c_str());                        
                     }
                     else
@@ -171,7 +171,7 @@ private:
             key.erase(trimright(key) + 1);
             value.erase(0,trimleft(value));
             std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-            req_->header[key] = value;
+            req_->header(key, value);
 
             return parse_headers();
         }
@@ -226,20 +226,18 @@ private:
                     return failure;
                 }
 
-                req_.reset(new HttpRequest);
                 std::string path = sLine.substr(first + 1, second - first - 1);
+                req_.reset(new HttpRequest(path));
                 if(strcasecmp("GET",sMethod.c_str()) == 0)
-                    req_->method = GET;
+                    req_->method() = GET;
                 else if(strcasecmp("POST",sMethod.c_str()) == 0)
-                    req_->method = POST;
+                    req_->method() = POST;
                 else if(strcasecmp("HEAD",sMethod.c_str()) == 0)
-                    req_->method = HEAD;
+                    req_->method() = HEAD;
                 else
                 {
                     return failure;
                 }
-
-                req_->path = path;
             }
 
             parse_func_ = &HttpParser::parse_headers;

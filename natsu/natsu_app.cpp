@@ -25,6 +25,9 @@ void NatsuApp::listen(unsigned short port)
 void NatsuApp::wait(unsigned short port)
 {
     sock_ = socket(AF_INET, SOCK_STREAM, 0);
+    int rep = 1;
+    setsockopt( sock_, SOL_SOCKET, SO_REUSEADDR, &rep, sizeof(rep) );
+
     sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
@@ -43,9 +46,6 @@ void NatsuApp::wait(unsigned short port)
         close(sock_);
         return ;
     }
-
-    int rep = 1;
-    setsockopt( sock_, SOL_SOCKET, SO_REUSEADDR, &rep, sizeof(rep) );
 
     while(true)
     {

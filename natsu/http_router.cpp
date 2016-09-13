@@ -33,7 +33,7 @@ void HttpRouter::register_handler(const std::string& pattern, Handler h, Method 
 void HttpRouter::handle(std::shared_ptr<HttpRequest> req,std::shared_ptr<HttpResponse> resp)
 {
     //@todo regex
-    switch(req->method)
+    switch(req->method())
     {
         case GET:
             handle(handle_get_, req, resp);
@@ -51,9 +51,9 @@ void HttpRouter::handle(std::shared_ptr<HttpRequest> req,std::shared_ptr<HttpRes
 void HttpRouter::handle(std::map<std::string, Handler>& h,
                 std::shared_ptr<HttpRequest> req,std::shared_ptr<HttpResponse> resp)
 {
-    if(h.find(req->path) != h.end())
+    if(h.find(req->document()) != h.end())
     {
-        (h[req->path])(req, resp);
+        (h[req->document()])(req, resp);
     }
     else
     {
