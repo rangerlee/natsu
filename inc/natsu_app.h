@@ -35,7 +35,10 @@ public:
     NatsuApp(std::shared_ptr<natsu::Inject> I = std::make_shared<Inject>());
     virtual ~NatsuApp();
 
-    void listen(unsigned short port);
+    void provide_service(const std::string& servicename, const std::string& etcdaddr);
+    void produce_service(const std::string& servicename, const std::string& etcdaddr);
+    
+    void listen(const std::string& ip, unsigned short port);
 	void register_handler(const std::string& pattern, 
 		std::function<void(std::shared_ptr<natsu::http::HttpRequest>,std::shared_ptr<natsu::http::HttpResponse>)> h, natsu::http::Method m = natsu::http::GET);
 

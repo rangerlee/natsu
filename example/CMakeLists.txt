@@ -6,5 +6,5 @@ link_directories(${PROJECT_SOURCE_DIR}/../)
 add_definitions(-std=c++11)
 add_executable(example main.cpp)
 
-target_link_libraries(example natsu hiredis)
+target_link_libraries(example natsu hiredis curl z)
 

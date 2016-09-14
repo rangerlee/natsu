@@ -23,6 +23,6 @@ int main()
   	std::cout << "init redis poll" << std::endl;
 	natsu::NatsuApp app;
 	app.register_handler("/", read_from_redis);
-	app.listen(9000);
-    	return 0;
+	app.listen("127.0.0.1", 9000);
+    return 0;
 }

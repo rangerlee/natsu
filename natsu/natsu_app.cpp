@@ -2,6 +2,10 @@
 #include "coroutine.h"
 #include "http_parser.h"
 #include "http_router.h"
+#include "natsu_config.h"
+#include "natsu_rpc.h"
+
+natsu::NatsuConfig kNatsuConfig;
 
 namespace natsu
 {
@@ -16,8 +20,9 @@ NatsuApp::~NatsuApp()
     
 }
 
-void NatsuApp::listen(unsigned short port)
+void NatsuApp::listen(const std::string& ip, unsigned short port)
 {
+    NatsuConfig::config("local_ipv4", ip);
     go std::bind(&natsu::NatsuApp::wait, this, port);
     co_sched.RunUntilNoTask();
 }
@@ -149,6 +154,16 @@ void NatsuApp::register_handler(const std::string& pattern,
 		std::function<void(std::shared_ptr<natsu::http::HttpRequest>,std::shared_ptr<natsu::http::HttpResponse>)> h, natsu::http::Method m)
 {
 	natsu::http::HttpRouter::instance().register_handler(pattern, h, m);
+}
+
+void NatsuApp::provide_service(const std::string& servicename, const std::string& etcdaddr)
+{
+    natsu::provide_service(servicename, etcdaddr);
+}
+
+void NatsuApp::produce_service(const std::string& servicename, const std::string& etcdaddr)
+{
+    natsu::produce_service(servicename, etcdaddr);
 }
 
 
