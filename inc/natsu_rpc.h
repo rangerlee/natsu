@@ -1,9 +1,8 @@
 #ifndef NATSU_RPC_H_
 #define NATSU_RPC_H_
-#include "coroutine.h"
+
 #include <map>
 #include <string>
-#include "channel.h"
 #include "natsu_snowflake.h"
 
 #ifdef __linux__
@@ -29,32 +28,19 @@ typedef std::shared_ptr<Message> MessagePtr;
 
 namespace natsu {
 
-extern std::map<uint64_t, std::shared_ptr<co_chan<MessagePtr>>> kClientRpcChannel;
-extern std::map<std::string, std::shared_ptr<co_chan<MessagePtr>>> kServiceRpcChannel;
-extern std::map<std::string, std::function<MessagePtr(MessagePtr)>> kRpcMethod;
-
 void provide_service(const std::string& servicename, const std::string& etcdaddr);
 void produce_service(const std::string& servicename, const std::string& etcdaddr);
-int64_t generate();
+MessagePtr invoke_rpc(const std::string& servicename, MessagePtr);
+void register_rpc_handler(const std::string& name, std::function<MessagePtr(MessagePtr)> func);
 
 }
 
-#define NATSU_RPC_PRODUCE(S, M, REQ, RSP) \
-	inline std::shared_ptr<RSP> Call##M(const std::shared_ptr<REQ>& req){\
-		if(natsu::kServiceRpcChannel.find(S) == natsu::kServiceRpcChannel.end()) {\
-			return std::shared_ptr<RSP>();\
-		}\
-		(*natsu::kServiceRpcChannel[S]) >> req;\
-		std::shared_ptr<co_chan<MessagePtr>> newchannel(new co_chan<MessagePtr>);\
-		uint64_t id = generate();\
-		natsu::kClientRpcChannel[id] = newchannel;\
-		(*newchannel) << rsp;\
-		natsu::kClientRpcChannel.erase(id);\
-	}
-
-#define NATSU_RPC_PROVIDE(M, REQ, RSP) \
-	inline std::shared_ptr<RSP> Do##M(const std::shared_ptr<REQ>& req);\
-	natsu::kRpcMethod[#REQ] = Do##M;
-
+#define NATSU_RPC_PROVIDE(NAME, REQ, RSP)\
+	natsu::register_rpc_handler(REQ().GetTypeName(), [](MessagePtr _req_) -> MessagePtr{\
+	MessagePtr _rsp_;\
+	std::shared_ptr<REQ> req = std::dynamic_pointer_cast<REQ>(_req_);\
+	std::shared_ptr<RSP> rsp = NAME(req);\
+	return std::dynamic_pointer_cast<Message>(rsp);\
+	});
 
 #endif

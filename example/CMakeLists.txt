@@ -4,7 +4,7 @@ project(example)
 include_directories(${PROJECT_SOURCE_DIR}/../inc)
 link_directories(${PROJECT_SOURCE_DIR}/../)
 add_definitions(-std=c++11)
-add_executable(example main.cpp)
+add_executable(example main.cpp rpc.pb.cc)
 
-target_link_libraries(example natsu hiredis curl z)
+target_link_libraries(example natsu hiredis curl z protobuf pcre)
 
