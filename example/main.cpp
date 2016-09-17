@@ -24,8 +24,7 @@ void read_from_redis(std::shared_ptr<natsu::http::HttpRequest>,std::shared_ptr<n
 	//	rsp->response(404);
 	std::shared_ptr<rpc::req> r(new rpc::req);
 	r->set_data("hello"); 
-	MessagePtr p = natsu::invoke_rpc("im", r);
-	std::shared_ptr<rpc::rsp> rs = std::dynamic_pointer_cast<rpc::rsp>(p);
+	std::shared_ptr<rpc::rsp> rs = natsu::invoke<rpc::req, rpc::rsp>("im", r);
 	rsp->response(rs->data());
 }
 

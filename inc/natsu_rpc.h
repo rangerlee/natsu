@@ -33,6 +33,12 @@ void produce_service(const std::string& servicename, const std::string& etcdaddr
 MessagePtr invoke_rpc(const std::string& servicename, MessagePtr);
 void register_rpc_handler(const std::string& name, std::function<MessagePtr(MessagePtr)> func);
 
+template<typename R, typename Q>
+std::shared_ptr<Q> invoke(const std::string& servicename, std::shared_ptr<R> r)
+{
+	return std::dynamic_pointer_cast<Q>(invoke_rpc(servicename, r));
+}
+
 }
 
 #define NATSU_RPC_PROVIDE(NAME, REQ, RSP)\
