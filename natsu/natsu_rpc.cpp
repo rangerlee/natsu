@@ -227,7 +227,6 @@ public:
 
         while(true)
         {
-            co_sleep(3000);
             int port  = 5000 + rand() % 5000;
             sockaddr_in addr;
             addr.sin_family = AF_INET;
@@ -238,6 +237,7 @@ public:
             {
                 fprintf(stderr, "rpc bind [%d] error: %s\n", port, strerror(errno));
                 close(sock);
+                co_sleep(3000);
                 sock = socket(AF_INET, SOCK_STREAM, 0);
                 setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &rep, sizeof(rep));
                 continue;
@@ -247,6 +247,7 @@ public:
             {
                 fprintf(stderr, "rpc listen error: %s\n", strerror(errno));
                 close(sock);
+                co_sleep(3000);
                 sock = socket(AF_INET, SOCK_STREAM, 0);
                 setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &rep, sizeof(rep));
                 continue;
@@ -309,6 +310,7 @@ private:
 
     void handle(int sockfd)
     {
+        fprintf(stderr, "provider accept producer connection %d\n", sockfd);
         co_chan<std::shared_ptr<std::string>> channel_write(kMaxChannelSize);
 
         go std::bind(&EtcdProvider::sendrpc, this, sockfd, channel_write);
@@ -319,15 +321,15 @@ private:
             int n = read(sockfd, buf, sizeof(buf));
             if (n == -1)
             {
+                fprintf(stderr, "provider read failed %d\n", errno);
                 if (EAGAIN == errno || EINTR == errno)
                     continue;
 
-                close(sockfd);
                 break;
             }
             else if (n == 0)
             {
-                close(sockfd);
+                fprintf(stderr, "provider read timeout\n");
                 break;
             }
             else
@@ -344,12 +346,17 @@ private:
                         break;
                 }
 
-            }//else
+            }
         }
+
+        //@todo wait send failure and close socket
+        close(sockfd);
+        fprintf(stderr, "provider find producer lost %d\n", sockfd);
     }
 
     void handle_parse(MessagePtr message, int64_t rid, co_chan<std::shared_ptr<std::string>>& channel_write)
     {
+        fprintf(stderr, "got one rpc request and handle it\n");
         if(!message) return;
 
         if(kRpcMethod.find(message->GetTypeName()) != kRpcMethod.end())
@@ -404,6 +411,7 @@ public:
     {
         service_name_ = servicename;
         co_timer_add(std::chrono::seconds(1), std::bind(&EtcdProducer::produce_from_etcd, this, servicename, etcdaddr));
+        co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::handle_produce_timeout, this));
     }
 
     MessagePtr invoke(MessagePtr& ptr)
@@ -422,6 +430,25 @@ public:
     }
 
 private:
+    void handle_produce_timeout()
+    {
+        uint64_t diff = 15000;
+        diff = diff << 22;
+        uint64_t n = generate();
+        std::map<uint64_t, std::shared_ptr<co_chan<MessagePtr>>>::iterator it = kClientRpcChannel.begin();
+        for(; it != kClientRpcChannel.end(); ++it)
+        {
+            if((n - it->first) > diff)
+            {
+                fprintf(stderr, "%lu timeout and return null\n", it->first);
+                MessagePtr ptr;
+                (*it->second) << ptr;
+            }
+        }
+
+        co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::handle_produce_timeout, this));
+    }
+
     void produce_from_etcd(const std::string& servicename, const std::string& etcdaddr)
     {
         std::string request_url = format("http://%s/v2/keys/natsu/%s/provider/", etcdaddr.c_str(), servicename.c_str());
@@ -488,7 +515,7 @@ private:
 
                                     if(nodelist.find(object_item["key"].AsString()) == nodelist.end())
                                     {
-                                    	fprintf(stderr, "got one server : %s=%s\n",object_item["key"].AsString().c_str(), object_item["value"].AsString().c_str());
+                                        fprintf(stderr, "got one server : %s=%s\n",object_item["key"].AsString().c_str(), object_item["value"].AsString().c_str());
                                         go std::bind(&EtcdProducer::comm_one_server, this, object_item["key"].AsString());
                                     }
 
@@ -500,10 +527,10 @@ private:
                                 std::map<std::string,std::string>::iterator it = nodelist.begin();
                                 for (; it != nodelist.end(); ++it)
                                 {
-                                	if(service_node_.find(it->first) == service_node_.end())
-                                	{
-                                		fprintf(stderr, "del one server : %s=%s\n", it->first.c_str(), it->second.c_str());
-                                	}
+                                    if(service_node_.find(it->first) == service_node_.end())
+                                    {
+                                        fprintf(stderr, "del one server : %s=%s\n", it->first.c_str(), it->second.c_str());
+                                    }
                                 }
 
                             }
@@ -549,12 +576,16 @@ private:
         client_addr.sin_family = AF_INET;
         client_addr.sin_addr.s_addr = htons(INADDR_ANY);
         client_addr.sin_port = htons(0);
-        int client_socket = socket(AF_INET,SOCK_STREAM,0);
-        if(bind(client_socket,(struct sockaddr*)&client_addr,sizeof(client_addr)))
+
+        std::shared_ptr<int> sock(new int, [](int *fd) {
+            if(fd)close(*fd);
+        });
+        *sock = socket(AF_INET,SOCK_STREAM,0);
+
+        if(bind(*sock,(struct sockaddr*)&client_addr,sizeof(client_addr)))
         {
             fprintf(stderr, "etcd produce bind failed!\n");
             co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::comm_one_server, this, node));
-            close(client_socket);
             return ;
         }
 
@@ -565,31 +596,29 @@ private:
         {
             fprintf(stderr,"etcd produce inet_aton failed %s!\n", ip.c_str());
             co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::comm_one_server, this, node));
-            close(client_socket);
             return ;
         }
 
         server_addr.sin_port = htons(atoi(port.c_str()));
         socklen_t server_addr_length = sizeof(server_addr);
-        if(connect(client_socket,(struct sockaddr*)&server_addr, server_addr_length) < 0)
+        if(connect(*sock,(struct sockaddr*)&server_addr, server_addr_length) < 0)
         {
             fprintf(stderr,"etcd produce connect failed %s:%s!\n", ip.c_str(),port.c_str());
             co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::comm_one_server, this, node));
-            close(client_socket);
             return ;
         }
 
-        go std::bind(&EtcdProducer::recv_response, this, client_socket);
+        go std::bind(&EtcdProducer::handle_parse, this, sock);
 
         while(true)
         {
             RpcChannelData data;
             (*kServiceRpcChannel[service_name_]) >> data;
-
+            fprintf(stderr, "process one rpc request\n");
             std::shared_ptr<std::string> bin = RpcPacketParser::Encode(data.msg.get(), data.id);
             if(!bin)
             {
-                //todo
+                fprintf(stderr, "encoding rpc data failed\n");
                 continue;
             }
 
@@ -597,12 +626,11 @@ private:
             size_t len = bin->size();
             while(pos < len)
             {
-                ssize_t n = write(client_socket, bin->c_str() + pos, bin->size() - pos);
+                ssize_t n = write(*sock, bin->c_str() + pos, bin->size() - pos);
                 if(n == -1)
                 {
-                    //todo
+                    fprintf(stderr, "%s send failed\n", node.c_str() );
                     co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::comm_one_server, this, node));
-                    close(client_socket);
                     return ;
                 }
 
@@ -611,13 +639,13 @@ private:
         }
     }
 
-    void recv_response(int sockfd)
+    void handle_parse(std::shared_ptr<int> sockfd)
     {
         RpcPacketParser rpc_parser_;
         char buf[1024];
         while(true)
         {
-            int n = read(sockfd, buf, sizeof(buf));
+            int n = read(*sockfd, buf, sizeof(buf));
             if (n == -1)
             {
                 if (EAGAIN == errno || EINTR == errno)
@@ -643,12 +671,15 @@ private:
                         {
                             (*kClientRpcChannel[rid]) << message;
                         }
+                        else
+                        {
+                            fprintf(stderr, "unable find %ld message\n", rid);
+                        }
                     }
                     else
                         break;
                 }
-
-            }//else
+            }
         }
     }
 
@@ -670,12 +701,6 @@ MessagePtr invoke_rpc(const std::string& service, MessagePtr ptr)
     return rsp;
 }
 
-void handle_produce_timeout()
-{
-    //todo judge timeout
-
-    co_timer_add(std::chrono::seconds(10), handle_produce_timeout);
-}
 
 void provide_service(const std::string& servicename, const std::string& etcdaddr)
 {
@@ -685,7 +710,6 @@ void provide_service(const std::string& servicename, const std::string& etcdaddr
 
 void produce_service(const std::string& servicename, const std::string& etcdaddr)
 {
-    go handle_produce_timeout;
     kProducer[servicename] = std::shared_ptr<EtcdProducer>(new EtcdProducer());
     kServiceRpcChannel[servicename] = std::shared_ptr<co_chan<RpcChannelData>>(new co_chan<RpcChannelData>);
     go std::bind(&EtcdProducer::produce_service_etcd, kProducer[servicename], servicename, etcdaddr);
