@@ -312,8 +312,9 @@ private:
     {
         fprintf(stderr, "provider accept producer connection %d\n", sockfd);
         co_chan<std::shared_ptr<std::string>> channel_write(kMaxChannelSize);
-
-        go std::bind(&EtcdProvider::sendrpc, this, sockfd, channel_write);
+        co_mutex locker;
+        locker.lock();
+        go std::bind(&EtcdProvider::sendrpc, this, sockfd, channel_write, locker);
 
         char buf[1024];
         while(true)
@@ -349,7 +350,7 @@ private:
             }
         }
 
-        //@todo wait send failure and close socket
+        locker.lock();
         close(sockfd);
         fprintf(stderr, "provider find producer lost %d\n", sockfd);
     }
@@ -375,7 +376,7 @@ private:
         }
     }
 
-    void sendrpc(int sockfd, co_chan<std::shared_ptr<std::string>>& channel_write)
+    void sendrpc(int sockfd, co_chan<std::shared_ptr<std::string>>& channel_write, co_mutex locker)
     {
         while(true)
         {
@@ -395,6 +396,8 @@ private:
                 pos += n;
             }
         }
+
+        locker.unlock();
     }
 
 private:
@@ -577,15 +580,13 @@ private:
         client_addr.sin_addr.s_addr = htons(INADDR_ANY);
         client_addr.sin_port = htons(0);
 
-        std::shared_ptr<int> sock(new int, [](int *fd) {
-            if(fd)close(*fd);
-        });
-        *sock = socket(AF_INET,SOCK_STREAM,0);
+        int sockfd = socket(AF_INET,SOCK_STREAM,0);
 
-        if(bind(*sock,(struct sockaddr*)&client_addr,sizeof(client_addr)))
+        if(bind(sockfd,(struct sockaddr*)&client_addr,sizeof(client_addr)))
         {
             fprintf(stderr, "etcd produce bind failed!\n");
             co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::comm_one_server, this, node));
+            close(sockfd);
             return ;
         }
 
@@ -596,19 +597,23 @@ private:
         {
             fprintf(stderr,"etcd produce inet_aton failed %s!\n", ip.c_str());
             co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::comm_one_server, this, node));
+            close(sockfd);
             return ;
         }
 
         server_addr.sin_port = htons(atoi(port.c_str()));
         socklen_t server_addr_length = sizeof(server_addr);
-        if(connect(*sock,(struct sockaddr*)&server_addr, server_addr_length) < 0)
+        if(connect(sockfd,(struct sockaddr*)&server_addr, server_addr_length) < 0)
         {
             fprintf(stderr,"etcd produce connect failed %s:%s!\n", ip.c_str(),port.c_str());
             co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::comm_one_server, this, node));
+            close(sockfd);
             return ;
         }
 
-        go std::bind(&EtcdProducer::handle_parse, this, sock);
+        co_mutex locker;
+        locker.lock();
+        go std::bind(&EtcdProducer::handle_parse, this, sockfd, locker);
 
         while(true)
         {
@@ -626,11 +631,13 @@ private:
             size_t len = bin->size();
             while(pos < len)
             {
-                ssize_t n = write(*sock, bin->c_str() + pos, bin->size() - pos);
+                ssize_t n = write(sockfd, bin->c_str() + pos, bin->size() - pos);
                 if(n == -1)
                 {
                     fprintf(stderr, "%s send failed\n", node.c_str() );
                     co_timer_add(std::chrono::seconds(10), std::bind(&EtcdProducer::comm_one_server, this, node));
+                    locker.lock();
+                    close(sockfd);
                     return ;
                 }
 
@@ -639,13 +646,13 @@ private:
         }
     }
 
-    void handle_parse(std::shared_ptr<int> sockfd)
+    void handle_parse(int sockfd, co_mutex locker)
     {
         RpcPacketParser rpc_parser_;
         char buf[1024];
         while(true)
         {
-            int n = read(*sockfd, buf, sizeof(buf));
+            int n = read(sockfd, buf, sizeof(buf));
             if (n == -1)
             {
                 if (EAGAIN == errno || EINTR == errno)
@@ -681,6 +688,8 @@ private:
                 }
             }
         }
+
+        locker.unlock();
     }
 
 private:
