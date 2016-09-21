@@ -3,9 +3,11 @@
 
 #include <sys/time.h>
 
+#include "singleton.h"
+
 namespace natsu{
 
-class SnowFlake
+class SnowFlake : public singleton<SnowFlake>
 {
 public:
 	// generate unique id

@@ -1,6 +1,7 @@
 #include "coroutine.h"
 #include "natsu_rpc.h"
 #include "natsu_config.h"
+#include "natsu_snowflake.h"
 #include "format.h"
 #include "gci-json.h"
 #include <curl/curl.h>
@@ -24,8 +25,7 @@ const int kMaxChannelSize = 1024;
 
 int64_t generate()
 {
-    static natsu::SnowFlake kSnowFlake;
-    return kSnowFlake.generate();
+    return SnowFlake::instance().generate();
 }
 
 void register_rpc_handler(const std::string& name, std::function<MessagePtr(MessagePtr)> func)

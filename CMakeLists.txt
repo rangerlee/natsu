@@ -51,7 +51,7 @@ if (DISABLE_HOOK)
     list(REMOVE_ITEM CO_SRC_LIST ${PROJECT_SOURCE_DIR}/libgo/linux/linux_glibc_hook.cpp)
     aux_source_directory(${PROJECT_SOURCE_DIR}/libgo/disable_hook CO_SRC_LIST)
 endif()
-set(CMAKE_CXX_FLAGS "-std=c++11 -fPIC -Wall -pthread")
+set(CMAKE_CXX_FLAGS "-std=c++11 -std=c++1y -fPIC -Wall -pthread")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -pg ${CMAKE_CXX_FLAGS} -Werror")
 set(CMAKE_CXX_FLAGS_RELEASE "-g -O3 ${CMAKE_CXX_FLAGS} -Werror")
 

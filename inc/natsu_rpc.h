@@ -3,7 +3,6 @@
 
 #include <map>
 #include <string>
-#include "natsu_snowflake.h"
 
 #ifdef __linux__
 #include <netinet/in.h>
@@ -39,14 +38,17 @@ std::shared_ptr<Q> invoke(const std::string& servicename, std::shared_ptr<R> r)
 	return std::dynamic_pointer_cast<Q>(invoke_rpc(servicename, r));
 }
 
+template<typename R, typename Q>
+void provide(auto fun) 
+{
+	natsu::register_rpc_handler(R().GetTypeName(), [fun](MessagePtr _req_) -> MessagePtr{
+		MessagePtr _rsp_;
+		std::shared_ptr<R> req = std::dynamic_pointer_cast<R>(_req_);
+		std::shared_ptr<Q> rsp = std::make_shared<Q>();
+		fun(req, rsp);
+		return std::dynamic_pointer_cast<Message>(rsp);
+	});
 }
 
-#define NATSU_RPC_PROVIDE(NAME, REQ, RSP)\
-	natsu::register_rpc_handler(REQ().GetTypeName(), [](MessagePtr _req_) -> MessagePtr{\
-	MessagePtr _rsp_;\
-	std::shared_ptr<REQ> req = std::dynamic_pointer_cast<REQ>(_req_);\
-	std::shared_ptr<RSP> rsp = NAME(req);\
-	return std::dynamic_pointer_cast<Message>(rsp);\
-	});
-
+}
 #endif
