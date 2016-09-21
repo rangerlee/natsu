@@ -20,6 +20,11 @@ NatsuApp::~NatsuApp()
     
 }
 
+void NatsuApp::run()
+{
+    co_sched.RunUntilNoTask();
+}
+
 void NatsuApp::listen(const std::string& ip, unsigned short port)
 {
     NatsuConfig::config("local_ipv4", ip);

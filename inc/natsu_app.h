@@ -39,6 +39,8 @@ public:
     void produce_service(const std::string& servicename, const std::string& etcdaddr);
     
     void listen(const std::string& ip, unsigned short port);
+    void run();
+
 	void register_handler(const std::string& pattern, 
 		std::function<void(std::shared_ptr<natsu::http::HttpRequest>,std::shared_ptr<natsu::http::HttpResponse>)> h, natsu::http::Method m = natsu::http::GET);
 
