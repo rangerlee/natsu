@@ -42,31 +42,68 @@ std::string HttpRequest::query()
     return path_.substr(pos_q + 1, std::max(pos_f,pos_p) - pos_q - 1);
 }
 
-std::string HttpRequest::query(const std::string& q)
+std::string HttpRequest::data(const std::string& q)
 {
-	std::string str = query();
-	std::vector<std::string> tokens;
-	natsu::tokenize(str, tokens, "&");
-	for (size_t i = 0; i < tokens.size(); ++i)
+	if(GET == method_)
 	{
-		std::string k,v;
-		size_t pos = tokens[i].find("=");
-		if(pos != std::string::npos)
-		{
-			k = tokens[i].substr(0, pos);
-			v = tokens[i].substr(pos + 1);
-			v = curl_unescape(v.c_str(), v.size());
-		}
-		else
-		{
-			k = tokens[i].substr(0, pos - 1);
-		}
+        std::string str = query();
+    	std::vector<std::string> tokens;
+    	natsu::tokenize(str, tokens, "&");
+    	for (size_t i = 0; i < tokens.size(); ++i)
+    	{
+    		std::string k,v;
+    		size_t pos = tokens[i].find("=");
+    		if(pos != std::string::npos)
+    		{
+    			k = tokens[i].substr(0, pos);
+    			v = tokens[i].substr(pos + 1);
+    			v = curl_unescape(v.c_str(), v.size());
+    		}
+    		else
+    		{
+    			k = tokens[i].substr(0, pos - 1);
+    		}
 
-		if(k == q)
-		{
-			return v;
-		}
-	}
+    		if(k == q)
+    		{
+    			return v;
+    		}
+    	}
+    }
+    else if(POST == method_)
+    {
+        if(header("content-type").compare("application/x-www-from-urlencoded") == 0)
+        {
+            std::vector<std::string> tokens;
+            natsu::tokenize(body_, tokens, "&");
+            for (size_t i = 0; i < tokens.size(); ++i)
+            {
+                std::string k,v;
+                size_t pos = tokens[i].find("=");
+                if(pos != std::string::npos)
+                {
+                    k = tokens[i].substr(0, pos);
+                    v = tokens[i].substr(pos + 1);
+                    v = curl_unescape(v.c_str(), v.size());
+                }
+                else
+                {
+                    k = tokens[i].substr(0, pos - 1);
+                }
+
+                if(k == q)
+                {
+                    return v;
+                }
+            }
+        }
+        else
+        {
+            //@todo list
+            //form-data
+            //multipart/form-data
+        }
+    }
 
 	return "";
 }

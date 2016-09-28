@@ -232,8 +232,10 @@ private:
                     req_->method() = GET;
                 else if(strcasecmp("POST",sMethod.c_str()) == 0)
                     req_->method() = POST;
-                else if(strcasecmp("HEAD",sMethod.c_str()) == 0)
-                    req_->method() = HEAD;
+                else if(strcasecmp("PUT",sMethod.c_str()) == 0)
+                    req_->method() = PUT;
+                else if(strcasecmp("DELETE",sMethod.c_str()) == 0)
+                    req_->method() = DELETE;
                 else
                 {
                     return failure;

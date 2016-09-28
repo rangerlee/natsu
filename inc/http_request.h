@@ -9,9 +9,10 @@ namespace http {
 
 enum Method
 {
-    HEAD,
+    PUT,
     GET,
-    POST
+    POST,
+	DELETE,
 };
 
 class HttpRequest
@@ -21,7 +22,11 @@ public:
     std::string header(const std::string& k);
     void header(const std::string& k, const std::string& v);
     std::string query();
-    std::string query(const std::string& k);
+	
+	//data() for GET is query
+	//data() for POST is form-data
+    std::string data(const std::string& k);
+	
     std::string parameters();
     std::string fragment();
     std::string document();
